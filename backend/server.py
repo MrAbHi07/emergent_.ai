@@ -205,7 +205,7 @@ async def get_game_sessions(current_user: dict = Depends(get_current_user)):
 
 @api_router.get("/games/stats")
 async def get_game_stats(current_user: dict = Depends(get_current_user)):
-    sessions = await db.game_sessions.find({"user_id": current_user['id']}, {"_id": 0}).to_list(1000)
+    sessions = await db.game_sessions.find({"user_id": current_user['id']}, {"_id": 0}).limit(500).to_list(500)
     
     if not sessions:
         return {
@@ -239,7 +239,7 @@ async def get_game_stats(current_user: dict = Depends(get_current_user)):
     }
 
 async def analyze_and_update_profile(user_id: str):
-    sessions = await db.game_sessions.find({"user_id": user_id}, {"_id": 0}).to_list(1000)
+    sessions = await db.game_sessions.find({"user_id": user_id}, {"_id": 0}).limit(100).to_list(100)
     
     if len(sessions) < 3:
         return
@@ -352,7 +352,7 @@ async def get_chat_history(session_id: str, current_user: dict = Depends(get_cur
     messages = await db.chat_messages.find(
         {"user_id": current_user['id'], "session_id": session_id},
         {"_id": 0}
-    ).sort("created_at", 1).to_list(1000)
+    ).sort("created_at", 1).limit(100).to_list(100)
     
     for msg in messages:
         if isinstance(msg['created_at'], str):
@@ -382,7 +382,7 @@ async def get_suggested_topics(current_user: dict = Depends(get_current_user)):
 
 @api_router.get("/analytics/dashboard")
 async def get_analytics_dashboard(current_user: dict = Depends(get_current_user)):
-    sessions = await db.game_sessions.find({"user_id": current_user['id']}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    sessions = await db.game_sessions.find({"user_id": current_user['id']}, {"_id": 0}).sort("created_at", -1).limit(50).to_list(50)
     profile = await db.learning_profiles.find_one({"user_id": current_user['id']}, {"_id": 0})
     
     recent_sessions = sessions[:10] if len(sessions) > 10 else sessions
