@@ -1,0 +1,92 @@
+{
+  "theme": "Light",
+  "archetype": "3 (Pastel & Soft) mixed with 1 (Organic & Earthy)",
+  "emotional_tone": "Calm, supportive, accessible, structured, friendly",
+  "typography": {
+    "heading_font": "Nunito",
+    "body_font": "Figtree",
+    "fallback_fonts": ["sans-serif", "system-ui"],
+    "scale_rules": {
+      "h1": "text-4xl sm:text-5xl lg:text-6xl tracking-tight leading-tight",
+      "h2": "text-2xl sm:text-3xl lg:text-4xl tracking-tight",
+      "h3": "text-xl sm:text-2xl",
+      "h4": "text-lg sm:text-xl",
+      "body": "text-base sm:text-lg leading-relaxed",
+      "labels": "text-sm tracking-[0.1em] uppercase font-semibold"
+    },
+    "accessibility": "Prioritize legibility. Avoid centered text blocks for body text. Left align reading content."
+  },
+  "colors": {
+    "background": {
+      "primary": "#FDFBF7",
+      "secondary": "#F3F5F2",
+      "tertiary": "#EBEAE6"
+    },
+    "text": {
+      "primary": "#1A1C19",
+      "secondary": "#4A4D48",
+      "muted": "#757873"
+    },
+    "brand": {
+      "primary": "#8ABF9B",
+      "primary_hover": "#78AB89",
+      "secondary": "#F2C48D",
+      "accent": "#9EADCC"
+    },
+    "state": {
+      "success": "#A3D9A5",
+      "warning": "#F2D588",
+      "error": "#E69C9C",
+      "info": "#A6C8E6"
+    }
+  },
+  "layout_and_spacing": {
+    "philosophy": "Generous Spacing Philosophy. Use large padding (p-8 to p-16) to reduce cognitive load and visual clutter.",
+    "container_max_width": "max-w-6xl mx-auto",
+    "grids": "MODE B (The Control Room Grid) for Dashboard, MODE A (Bento) for Gamified Selection.",
+    "border_radius": "rounded-2xl to rounded-3xl for a soft, tactile feel."
+  },
+  "surfaces_and_components": {
+    "cards": "Neumorphism (Tactile) variant: Flat solid backgrounds matching parent or slightly offset (e.g., #F3F5F2 on #FDFBF7), with very subtle ambient shadows (shadow-sm) and a sharp 1px border (border-black/5).",
+    "buttons": "Soft rounded edges (rounded-full or rounded-xl). High contrast text inside buttons. Explicit hover states with slight lift (-translate-y-0.5).",
+    "header": "Solid background (bg-[#FDFBF7]/90) with subtle bottom border. Avoid heavy glassmorphism to prevent visual distraction.",
+    "forms": "Large tap targets (min-h-[48px]). Clear explicit labels. No placeholder-only inputs."
+  },
+  "motion_and_interactions": {
+    "philosophy": "Minimal and predictable. Avoid sudden, fast, or chaotic animations that can trigger sensory overload.",
+    "hover_states": "Soft transitions (duration-300). Slight scale (scale-[1.02]) and color shift.",
+    "transitions": "Fade and gentle slide-up for entering elements.",
+    "accessibility": "Must respect prefers-reduced-motion."
+  },
+  "media_and_images": {
+    "hero_background": {
+      "url": "https://images.unsplash.com/photo-1763615445546-d2280a7167fb?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAxODF8MHwxfHNlYXJjaHwyfHxtaW5pbWFsaXN0JTIwcGFzdGVsJTIwYmFja2dyb3VuZHxlbnwwfHx8fDE3NzQ4NTAzNzl8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Soft pastel gradient with subtle color shifts, used for hero section background or auth background."
+    },
+    "ai_tutor_avatar": {
+      "url": "https://images.unsplash.com/photo-1659018966820-de07c94e0d01?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzV8MHwxfHNlYXJjaHwyfHxjdXRlJTIwM2QlMjByb2JvdCUyMGNoYXJhY3RlcnxlbnwwfHx8fDE3NzQ4NTAzNzV8MA&ixlib=rb-4.1.0&q=85",
+      "description": "A cute toy robot character against a soft blue background. Used as the avatar for the AI Tutor Chatbot."
+    },
+    "game_assets": {
+      "url": "https://images.unsplash.com/photo-1751644332113-2004a1b143f1?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxOTF8MHwxfHNlYXJjaHwyfHxjb2xvcmZ1bCUyMGdlb21ldHJpYyUyMHNoYXBlcyUyMDNkfGVufDB8fHx8MTc3NDg1MDM4MHww&ixlib=rb-4.1.0&q=85",
+      "description": "Colorful 3D geometric shapes. Used as thumbnail or thematic background for cognitive games."
+    },
+    "nature_calm": {
+      "url": "https://images.unsplash.com/photo-1774462367455-b5a0e942384b?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzN8MHwxfHNlYXJjaHwzfHxjYWxtaW5nJTIwc29mdCUyMG5hdHVyZXxlbnwwfHx8fDE3NzQ4NTAzNzB8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Soft sunlight filters through bare tree branches. Used for reading assessment or breathing exercise backgrounds."
+    }
+  },
+  "specific_module_guidelines": {
+    "games": "Keep interfaces extremely clean. Remove all non-essential UI elements during gameplay. Use large, distinct geometric shapes with clear color coding.",
+    "ai_tutor": "Use the ai_tutor_avatar. Implement speech-to-text with clear visual indicators (pulsing soft rings) when listening. Use large, legible text bubbles.",
+    "dashboard": "Use flat layout. Avoid sensory overload with too many charts. Use simple progress bars, large numerical summaries, and soft color coding for achievements."
+  },
+  "iconography": "lucide-react. Use rounded, soft icons (stroke-width: 1.5 or 2).",
+  "instructions_to_main_agent": [
+    "Install fonts: Nunito and Figtree via Google Fonts or standard imports.",
+    "Ensure ALL interactive elements include 'data-testid' attributes (e.g., data-testid='start-memory-game-btn').",
+    "Use Shadcn UI for standard components but override borders to be softer (rounded-2xl) and remove heavy shadows.",
+    "Prioritize accessibility: Use semantic HTML, ARIA labels, and ensure high contrast (minimum 4.5:1 for text).",
+    "Do NOT use generic placeholder images. Use the provided URLs in 'media_and_images'."
+  ]
+}
