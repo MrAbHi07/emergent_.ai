@@ -244,7 +244,6 @@ async def analyze_and_update_profile(user_id: str):
     if len(sessions) < 3:
         return
     
-    # Use ML model for analysis
     analysis = analyzer.analyze_performance(sessions)
     
     if not analysis:
@@ -296,9 +295,31 @@ async def send_chat_message(message_data: ChatMessageCreate, current_user: dict 
     
     profile = await db.learning_profiles.find_one({"user_id": current_user['id']}, {"_id": 0})
     
-    system_message = f"You are NeuroBuddy, a friendly and patient AI tutor for neurodiverse students. You explain concepts in simple, clear language with step-by-step guidance. Student name: {current_user['name']}."
-    if profile:
-        system_message += f" Learning style: {profile.get('learning_style', 'Unknown')}. Focus areas: {', '.join(profile.get('weaknesses', []))}."
+    system_message = f"""You are NeuroBuddy, an expert AI tutor specifically trained to support neurodiverse students (Autism, ADHD, Dyslexia). 
+
+Your teaching approach:
+1. **Break Down Complex Topics**: Always explain concepts step-by-step, starting with the simplest foundation
+2. **Use Multiple Representations**: Provide visual descriptions, analogies, and real-world examples
+3. **Be Patient & Encouraging**: Celebrate small wins, use positive reinforcement
+4. **Adapt to Learning Style**: The student learns best through {profile.get('learning_style', 'multiple modalities') if profile else 'multiple modalities'}
+5. **Check Understanding**: Ask simple questions to verify comprehension before moving forward
+6. **Provide Structure**: Use numbered lists, clear headings, and organized responses
+
+Student Profile:
+- Name: {current_user['name']}
+- Learning Style: {profile.get('learning_style', 'Visual/Kinesthetic') if profile else 'Not yet determined'}
+- Attention Level: {profile.get('attention_level', 'Moderate') if profile else 'Not yet determined'}
+- Areas needing support: {', '.join(profile.get('weaknesses', [])) if profile and profile.get('weaknesses') else 'Still being assessed'}
+
+For each response:
+- Start with a simple, one-sentence summary
+- Then provide detailed explanation with examples
+- Use formatting: **bold** for key terms, numbered lists for steps
+- End with a quick comprehension question or next step
+- Keep paragraphs short (2-3 sentences max)
+- Use emojis sparingly and only when they aid understanding
+
+Remember: You're not just answering questions - you're building confidence and understanding!"""
     
     try:
         chat = LlmChat(
@@ -338,6 +359,26 @@ async def get_chat_history(session_id: str, current_user: dict = Depends(get_cur
             msg['created_at'] = datetime.fromisoformat(msg['created_at'])
     
     return messages
+
+@api_router.get("/chat/suggested-topics")
+async def get_suggested_topics(current_user: dict = Depends(get_current_user)):
+    profile = await db.learning_profiles.find_one({"user_id": current_user['id']}, {"_id": 0})
+    
+    base_topics = [
+        "Help me understand fractions",
+        "Explain photosynthesis in simple terms",
+        "What are the continents?",
+        "How does the water cycle work?"
+    ]
+    
+    if profile and profile.get('weaknesses'):
+        weakness_topics = [
+            f"Tips for improving {weakness.lower()}"
+            for weakness in profile['weaknesses'][:2]
+        ]
+        return {"topics": weakness_topics + base_topics[:2]}
+    
+    return {"topics": base_topics}
 
 @api_router.get("/analytics/dashboard")
 async def get_analytics_dashboard(current_user: dict = Depends(get_current_user)):
@@ -382,7 +423,6 @@ logger = logging.getLogger(__name__)
 
 @api_router.post("/voice/transcribe")
 async def transcribe_voice(audio: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
-    """Transcribe audio to text using OpenAI Whisper."""
     try:
         text = await voice_service.transcribe_audio(audio)
         return {"text": text}
@@ -392,22 +432,11 @@ async def transcribe_voice(audio: UploadFile = File(...), current_user: dict = D
 
 @api_router.post("/voice/synthesize")
 async def synthesize_voice(text: str, voice: str = "alloy", current_user: dict = Depends(get_current_user)):
-    """Convert text to speech using OpenAI TTS."""
     try:
         audio_data = await voice_service.synthesize_speech(text, voice)
         return Response(content=audio_data, media_type="audio/mpeg")
     except Exception as e:
         logging.error(f"Speech synthesis error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@api_router.get("/ml/retrain")
-async def retrain_ml_model(current_user: dict = Depends(get_current_user)):
-    """Retrain the ML model (admin only for production)."""
-    try:
-        analyzer.create_and_train_model()
-        return {"message": "ML model retrained successfully"}
-    except Exception as e:
-        logging.error(f"ML retraining error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.on_event("shutdown")
