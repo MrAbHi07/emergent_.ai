@@ -8,79 +8,61 @@ NeuroBuddy AI is an intelligent companion platform for neurodiverse students (Au
 - **Backend**: FastAPI (Python), MongoDB (Motor)
 - **AI/ML**: Scikit-learn (Random Forest), OpenAI GPT-5.2 via `emergentintegrations` (Emergent LLM Key)
 
+## Design System (Dark Premium SaaS)
+- **Theme**: Dark (#05050A background, #0F111A surface)
+- **Primary**: Emerald #34D399 (glow: rgba(52,211,153,0.4))
+- **Secondary**: Amber #FBBF24 (glow: rgba(251,191,36,0.4))
+- **Accent**: Blue #38BDF8 (glow: rgba(56,189,248,0.4))
+- **Text**: #F8FAFC primary, #94A3B8 secondary, #64748B muted
+- **Fonts**: Outfit (headings), Manrope (body)
+- **Surfaces**: Crystal Glassmorphism (bg-white/4, backdrop-blur-20px, border-white/8)
+- **Effects**: Gradient orbs, glow shadows, hover lifts, staggered animations
+
 ## Core Modules
 
 ### 1. Authentication (JWT)
-- Login/Register with email & password
+- Login/Register with email & password, glassmorphic dark cards
 - Role-based: Student, Parent, Teacher
 - JWT token-based auth
 
 ### 2. Gamified Cognitive Assessments
-- **Memory Game** — Card matching with scoring & animations
-- **Reaction Time** — Speed-based response measurement
-- **Pattern Recognition** — Visual pattern identification
-- **Reading Assessment** — Reading comprehension challenges
+- Memory Game, Reaction Time, Pattern Recognition, Reading Assessment
+- All with scoring, animations, dark-themed cards
 
 ### 3. Machine Learning Module
-- Scikit-learn Random Forest classifier
-- Generates learning profiles: attention_level, learning_style, reading_difficulty
-- Trains on game session data
+- Scikit-learn Random Forest, generates learning profiles
+- attention_level, learning_style, reading_difficulty
 
 ### 4. AI Tutor Chatbot
-- GPT-5.2 powered via Emergent LLM Key
-- SCAFFOLD method pedagogical prompts
-- Markdown-rendered responses
-- Quick actions: Explain Simpler, Give Example, Show Visually, Practice Problem, I'm Confused
-- Follow-up suggestion chips, Suggested topics on empty chat
+- GPT-5.2, SCAFFOLD method, Markdown responses
+- Quick actions, follow-up suggestions, suggested topics
+- Dark-themed chat bubbles with emerald/glass styling
 
-### 5. Voice Interaction (Complete)
-- **STT (Speech-to-Text)**: Web Speech API (`voiceTranscription.js`)
-- **TTS (Text-to-Speech)**: Web Speech API speechSynthesis (`textToSpeech.js`)
-  - Voice selection dropdown (English voices)
-  - Speed control slider (0.5x — 2.0x)
-  - Pause / Resume / Stop playback controls
-  - Loading indicator ("Preparing...") before speech starts
-  - Per-message "Read" buttons on each AI response
-  - Markdown stripping for natural speech
-  - Chrome long-text keep-alive workaround
-  - User-friendly error messages
+### 5. Voice Interaction
+- **STT**: Web Speech API (`voiceTranscription.js`)
+- **TTS**: Web Speech API speechSynthesis (`textToSpeech.js`)
+  - Voice selection, speed control, pause/resume/stop, loading indicator
 
 ### 6. Analytics Dashboard
-- Game session history and performance trends
-- ML-generated learning profile display
+- Dark charts with emerald/blue lines
+- Profile cards, strengths/weaknesses, recommendations
 
 ## What's Implemented
-- [x] JWT Authentication (Login/Register)
+- [x] JWT Authentication
 - [x] 4 Gamified Cognitive Assessments
-- [x] ML Model (Scikit-learn Random Forest)
+- [x] ML Model (Scikit-learn)
 - [x] AI Tutor Chatbot (GPT-5.2, Markdown, Quick Actions)
 - [x] Analytics Dashboard
-- [x] Voice STT (Web Speech API)
-- [x] Voice TTS — basic (Web Speech API) — 2026-04-04
-- [x] Voice TTS — enhanced (voice select, speed, pause/resume, loading) — 2026-04-04
-- [x] Quick Action endpoint fix — 2026-04-04
+- [x] Voice STT + TTS (full controls)
+- [x] **Dark Premium SaaS UI** — 2026-04-04
 
 ## Backlog
-
 ### P0 — Personalized Learning Engine
-- Dynamically adjust content difficulty based on ML profile
-- Recommend lesson formats (text, audio, visual) per learning style
-- New Learning page or Dashboard integration
-
-### P2 — File Cleanup
-- Remove legacy files: AITutorOld.js, PatternGameOld.js, ReactionGameOld.js, ReadingGameOld.js
-- Remove unused voice_service.py
+### P2 — File Cleanup (remove legacy *Old.js files)
 
 ## Key API Endpoints
-- POST /api/auth/register & POST /api/auth/login
-- POST /api/games/session
+- POST /api/auth/register & /api/auth/login
+- POST /api/games/session, GET /api/games/stats
 - GET /api/ml/profile/{user_id}
-- POST /api/chat/send
-- POST /api/chat/quick-action
-- GET /api/chat/suggested-topics
-
-## DB Schema
-- users: email, hashed_password, role, full_name
-- game_sessions: user_id, game_type, score, accuracy, response_time, timestamp
-- ml_profiles: user_id, attention_level, learning_style, reading_difficulty, last_updated
-- chat_history: user_id, messages, timestamp
+- POST /api/chat/send, POST /api/chat/quick-action
+- GET /api/analytics/dashboard
