@@ -37,11 +37,12 @@ NeuroBuddy AI is an intelligent companion platform for neurodiverse students (Au
 ### 5. Voice Interaction
 - **STT (Speech-to-Text)**: Web Speech API (frontend, `voiceTranscription.js`)
 - **TTS (Text-to-Speech)**: Web Speech API speechSynthesis (frontend, `textToSpeech.js`)
-  - Voice loading with async fallback
+  - Async voice loading with timeout fallback
   - Markdown stripping for natural reading
   - Chrome long-text keep-alive workaround
   - Per-message and global Read Aloud buttons
-  - Stop/Play toggle
+  - Stop/Play toggle with state indicator
+  - User-friendly error messages for common failures
 
 ### 6. Analytics Dashboard
 - Game session history and performance trends

@@ -118,58 +118,58 @@ class TextToSpeech {
       utterance.pitch = 1.0;
       utterance.volume = 1.0;
 
+      // Chrome bug: long text pauses mid-speech. Nudge it every 10s.
+      let keepAlive = null;
+
+      const cleanup = () => {
+        if (keepAlive) { clearInterval(keepAlive); keepAlive = null; }
+        this.isSpeaking = false;
+        if (this.onStateChange) this.onStateChange(false);
+      };
+
       utterance.onstart = () => {
         this.isSpeaking = true;
         if (this.onStateChange) this.onStateChange(true);
       };
 
       utterance.onend = () => {
-        this.isSpeaking = false;
-        if (this.onStateChange) this.onStateChange(false);
+        cleanup();
         resolve();
       };
 
       utterance.onerror = (event) => {
-        this.isSpeaking = false;
-        if (this.onStateChange) this.onStateChange(false);
-
+        cleanup();
         // 'canceled' is not a real error — happens when stop() is called
-        if (event.error === 'canceled') {
+        if (event.error === 'canceled' || event.error === 'interrupted') {
           resolve();
           return;
         }
-        reject(new Error(`Speech failed: ${event.error || 'unknown error'}`));
+
+        // Provide user-friendly messages for common errors
+        const friendlyMessages = {
+          'synthesis-failed': 'Could not play audio. Please check your speakers or try a different browser.',
+          'language-unavailable': 'No voice available for this language. Please try a different browser.',
+          'voice-unavailable': 'Selected voice is unavailable. Trying again may work.',
+          'audio-busy': 'Audio device is busy. Please try again in a moment.',
+          'network': 'Network error during speech synthesis. Please check your connection.',
+          'not-allowed': 'Speech synthesis was blocked. Please allow audio in your browser settings.'
+        };
+
+        const msg = friendlyMessages[event.error] || `Speech failed: ${event.error || 'unknown error'}`;
+        reject(new Error(msg));
       };
 
       this.synth.speak(utterance);
 
-      // Chrome bug: long text pauses mid-speech. Nudge it every 10s.
-      const keepAlive = setInterval(() => {
+      keepAlive = setInterval(() => {
         if (!this.synth.speaking) {
           clearInterval(keepAlive);
+          keepAlive = null;
           return;
         }
         this.synth.pause();
         this.synth.resume();
       }, 10000);
-
-      utterance.onend = () => {
-        clearInterval(keepAlive);
-        this.isSpeaking = false;
-        if (this.onStateChange) this.onStateChange(false);
-        resolve();
-      };
-
-      utterance.onerror = (event) => {
-        clearInterval(keepAlive);
-        this.isSpeaking = false;
-        if (this.onStateChange) this.onStateChange(false);
-        if (event.error === 'canceled') {
-          resolve();
-          return;
-        }
-        reject(new Error(`Speech failed: ${event.error || 'unknown error'}`));
-      };
     });
   }
 }
