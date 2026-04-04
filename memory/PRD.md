@@ -31,18 +31,19 @@ NeuroBuddy AI is an intelligent companion platform for neurodiverse students (Au
 - SCAFFOLD method pedagogical prompts
 - Markdown-rendered responses
 - Quick actions: Explain Simpler, Give Example, Show Visually, Practice Problem, I'm Confused
-- Follow-up suggestion chips
-- Suggested topics on empty chat
+- Follow-up suggestion chips, Suggested topics on empty chat
 
-### 5. Voice Interaction
-- **STT (Speech-to-Text)**: Web Speech API (frontend, `voiceTranscription.js`)
-- **TTS (Text-to-Speech)**: Web Speech API speechSynthesis (frontend, `textToSpeech.js`)
-  - Async voice loading with timeout fallback
-  - Markdown stripping for natural reading
+### 5. Voice Interaction (Complete)
+- **STT (Speech-to-Text)**: Web Speech API (`voiceTranscription.js`)
+- **TTS (Text-to-Speech)**: Web Speech API speechSynthesis (`textToSpeech.js`)
+  - Voice selection dropdown (English voices)
+  - Speed control slider (0.5x — 2.0x)
+  - Pause / Resume / Stop playback controls
+  - Loading indicator ("Preparing...") before speech starts
+  - Per-message "Read" buttons on each AI response
+  - Markdown stripping for natural speech
   - Chrome long-text keep-alive workaround
-  - Per-message and global Read Aloud buttons
-  - Stop/Play toggle with state indicator
-  - User-friendly error messages for common failures
+  - User-friendly error messages
 
 ### 6. Analytics Dashboard
 - Game session history and performance trends
@@ -50,13 +51,14 @@ NeuroBuddy AI is an intelligent companion platform for neurodiverse students (Au
 
 ## What's Implemented
 - [x] JWT Authentication (Login/Register)
-- [x] 4 Gamified Cognitive Assessments (Memory, Reaction, Pattern, Reading)
+- [x] 4 Gamified Cognitive Assessments
 - [x] ML Model (Scikit-learn Random Forest)
-- [x] AI Tutor Chatbot (GPT-5.2, Markdown, Quick Actions, Follow-ups)
+- [x] AI Tutor Chatbot (GPT-5.2, Markdown, Quick Actions)
 - [x] Analytics Dashboard
 - [x] Voice STT (Web Speech API)
-- [x] Voice TTS (Web Speech API speechSynthesis) — Fixed 2026-04-04
-- [x] Quick Action endpoint fix (query params → JSON body) — Fixed 2026-04-04
+- [x] Voice TTS — basic (Web Speech API) — 2026-04-04
+- [x] Voice TTS — enhanced (voice select, speed, pause/resume, loading) — 2026-04-04
+- [x] Quick Action endpoint fix — 2026-04-04
 
 ## Backlog
 
@@ -66,19 +68,19 @@ NeuroBuddy AI is an intelligent companion platform for neurodiverse students (Au
 - New Learning page or Dashboard integration
 
 ### P2 — File Cleanup
-- Remove legacy files: `AITutorOld.js`, `PatternGameOld.js`, `ReactionGameOld.js`, `ReadingGameOld.js`
-- Remove unused `voice_service.py`
+- Remove legacy files: AITutorOld.js, PatternGameOld.js, ReactionGameOld.js, ReadingGameOld.js
+- Remove unused voice_service.py
 
 ## Key API Endpoints
-- `POST /api/auth/register` & `POST /api/auth/login`
-- `POST /api/games/session` (Log game data)
-- `GET /api/ml/profile/{user_id}` (ML profile)
-- `POST /api/chat/send` (AI Tutor)
-- `POST /api/chat/quick-action` (Quick actions)
-- `GET /api/chat/suggested-topics`
+- POST /api/auth/register & POST /api/auth/login
+- POST /api/games/session
+- GET /api/ml/profile/{user_id}
+- POST /api/chat/send
+- POST /api/chat/quick-action
+- GET /api/chat/suggested-topics
 
 ## DB Schema
-- **users**: email, hashed_password, role, full_name
-- **game_sessions**: user_id, game_type, score, accuracy, response_time, timestamp
-- **ml_profiles**: user_id, attention_level, learning_style, reading_difficulty, last_updated
-- **chat_history**: user_id, messages, timestamp
+- users: email, hashed_password, role, full_name
+- game_sessions: user_id, game_type, score, accuracy, response_time, timestamp
+- ml_profiles: user_id, attention_level, learning_style, reading_difficulty, last_updated
+- chat_history: user_id, messages, timestamp
