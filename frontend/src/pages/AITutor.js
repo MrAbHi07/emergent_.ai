@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { API, getAuthToken } from '../App';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
+import VoiceTranscription from '../utils/voiceTranscription';
 
 const AITutor = () => {
   const navigate = useNavigate();
@@ -113,57 +114,101 @@ const AITutor = () => {
 
   const handleVoiceInput = async () => {
     try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        toast.error('Voice input not supported in your browser');
+      // Check browser support
+      const voiceTranscription = new VoiceTranscription();
+      const support = voiceTranscription.getBrowserSupport();
+
+      if (!support.webSpeech && !support.mediaRecorder) {
+        toast.error('Voice input not supported in your browser. Please try Chrome, Edge, or Safari.');
         return;
       }
 
+      if (!support.microphone) {
+        toast.error('Microphone access not available. Please check your device.');
+        return;
+      }
+
+      // Check and request microphone permission
+      const permissionStatus = await voiceTranscription.checkMicrophonePermission();
+      
+      if (permissionStatus.state === 'denied') {
+        toast.error('Microphone permission denied. Please enable it in your browser settings.', {
+          duration: 5000
+        });
+        return;
+      }
+
+      if (permissionStatus.state === 'prompt') {
+        const accessResult = await voiceTranscription.requestMicrophoneAccess();
+        if (!accessResult.success) {
+          toast.error(accessResult.message, { duration: 5000 });
+          return;
+        }
+      }
+
       setRecording(true);
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      const audioChunks = [];
+      let transcriptionMethod = 'Web Speech API';
 
-      mediaRecorder.ondataavailable = (event) => {
-        audioChunks.push(event.data);
-      };
+      try {
+        // Try Web Speech API first (faster, browser-native)
+        if (support.webSpeech) {
+          toast.info('🎤 Listening... Speak clearly into your microphone', {
+            duration: 10000,
+            id: 'recording-toast'
+          });
 
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-        const formData = new FormData();
-        formData.append('audio', audioBlob, 'recording.webm');
-
-        try {
-          const response = await axios.post(
-            `${API}/voice/transcribe`,
-            formData,
-            {
-              headers: {
-                Authorization: `Bearer ${getAuthToken()}`,
-                'Content-Type': 'multipart/form-data'
+          const text = await voiceTranscription.transcribeWithWebSpeech(
+            (interimText, isInterim) => {
+              // Show interim results
+              if (isInterim) {
+                setInputMessage(interimText);
               }
-            }
+            },
+            (error) => {
+              console.error('Web Speech error:', error);
+            },
+            10000 // 10 seconds max
           );
-          setInputMessage(response.data.text);
-          toast.success('Voice transcribed!');
-        } catch (error) {
-          toast.error('Failed to transcribe voice');
-        }
 
-        stream.getTracks().forEach(track => track.stop());
+          setInputMessage(text);
+          toast.success('✓ Voice transcribed successfully!');
+        } else {
+          // Fallback to OpenAI Whisper
+          transcriptionMethod = 'OpenAI Whisper';
+          toast.info('🎤 Recording... (5 seconds)', {
+            duration: 5000,
+            id: 'recording-toast'
+          });
+
+          const text = await voiceTranscription.transcribeWithWhisper(API, getAuthToken(), 5000);
+          setInputMessage(text);
+          toast.success('✓ Voice transcribed successfully!');
+        }
+      } catch (error) {
+        console.error(`${transcriptionMethod} transcription error:`, error);
+        
+        // If Web Speech failed, try Whisper as fallback
+        if (transcriptionMethod === 'Web Speech API' && support.mediaRecorder) {
+          try {
+            toast.info('Trying alternative transcription method...', { duration: 3000 });
+            const text = await voiceTranscription.transcribeWithWhisper(API, getAuthToken(), 5000);
+            setInputMessage(text);
+            toast.success('✓ Voice transcribed successfully!');
+          } catch (whisperError) {
+            toast.error(`Transcription failed: ${whisperError.message}`, { duration: 5000 });
+          }
+        } else {
+          toast.error(`Transcription failed: ${error.message}`, { duration: 5000 });
+        }
+      } finally {
         setRecording(false);
-      };
+        toast.dismiss('recording-toast');
+      }
 
-      mediaRecorder.start();
-      setTimeout(() => {
-        if (mediaRecorder.state === 'recording') {
-          mediaRecorder.stop();
-        }
-      }, 5000);
-
-      toast.info('Recording... (5 seconds)');
     } catch (error) {
-      toast.error('Failed to access microphone');
       setRecording(false);
+      console.error('Voice input error:', error);
+      toast.error(`Voice input error: ${error.message}`, { duration: 5000 });
     }
   };
 
