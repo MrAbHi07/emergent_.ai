@@ -66,3 +66,25 @@ code {
     @apply bg-background text-foreground;
   }
 }
+
+/* TTS speed slider thumb */
+input[type="range"][data-testid="tts-speed-slider"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #8ABF9B;
+  border: 2px solid #FDFBF7;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  cursor: pointer;
+}
+input[type="range"][data-testid="tts-speed-slider"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #8ABF9B;
+  border: 2px solid #FDFBF7;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  cursor: pointer;
+}

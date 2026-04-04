@@ -1,14 +1,14 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, Send, Mic, Volume2, VolumeX, Sparkles, BookOpen, Calculator, Globe, Lightbulb, Smile, HelpCircle, Eye, Dumbbell, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Send, Mic, Volume2, VolumeX, Sparkles, BookOpen, Calculator, Globe, Lightbulb, Smile, HelpCircle, Eye, Dumbbell, ArrowRight, Pause, Play, Square, Settings2, Loader2, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { API, getAuthToken } from '../App';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 import VoiceTranscription from '../utils/voiceTranscription';
-import tts from '../utils/textToSpeech';
+import tts, { TTS_STATE } from '../utils/textToSpeech';
 
 const AITutor = () => {
   const navigate = useNavigate();
@@ -21,7 +21,11 @@ const AITutor = () => {
   const [followUpSuggestions, setFollowUpSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [lastAIResponse, setLastAIResponse] = useState('');
-  const [speaking, setSpeaking] = useState(false);
+  const [ttsState, setTtsState] = useState(TTS_STATE.IDLE);
+  const [ttsVoices, setTtsVoices] = useState([]);
+  const [selectedVoiceURI, setSelectedVoiceURI] = useState('');
+  const [speechRate, setSpeechRate] = useState(1.0);
+  const [showTtsPanel, setShowTtsPanel] = useState(false);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -30,10 +34,13 @@ const AITutor = () => {
 
   useEffect(() => {
     fetchSuggestedTopics();
-    // Pre-load TTS voices early so they're ready when needed
     if (tts.isSupported()) {
-      tts.loadVoices();
-      tts.onStateChange = (isSpeaking) => setSpeaking(isSpeaking);
+      tts.onStateChange = (state) => setTtsState(state);
+      tts.loadVoices().then((voices) => {
+        setTtsVoices(voices.filter(v => v.lang.startsWith('en')));
+        const picked = tts._pickVoice();
+        if (picked) setSelectedVoiceURI(picked.voiceURI);
+      });
     }
     return () => { tts.stop(); };
   }, []);
@@ -220,10 +227,24 @@ const AITutor = () => {
     }
   };
 
+  const handleVoiceChange = useCallback((voiceURI) => {
+    setSelectedVoiceURI(voiceURI);
+    tts.setVoice(voiceURI);
+  }, []);
+
+  const handleRateChange = useCallback((rate) => {
+    const r = parseFloat(rate);
+    setSpeechRate(r);
+    tts.setRate(r);
+  }, []);
+
   const handleReadAloud = async (textOverride) => {
-    // If currently speaking, stop
-    if (speaking) {
+    if (ttsState === TTS_STATE.SPEAKING || ttsState === TTS_STATE.LOADING) {
       tts.stop();
+      return;
+    }
+    if (ttsState === TTS_STATE.PAUSED) {
+      tts.resume();
       return;
     }
 
@@ -232,7 +253,6 @@ const AITutor = () => {
       return;
     }
 
-    // Use explicit text or fall back to the last AI message
     const text = textOverride || (() => {
       const lastAI = [...messages].reverse().find(m => m.role === 'assistant');
       return lastAI?.content;
@@ -244,14 +264,18 @@ const AITutor = () => {
     }
 
     try {
-      toast.info('Reading aloud...', { id: 'tts-toast', duration: 3000 });
       await tts.speak(text);
-      toast.dismiss('tts-toast');
     } catch (err) {
-      toast.dismiss('tts-toast');
       toast.error(err.message || 'Speech failed. Please try again.');
     }
   };
+
+  const handlePause = () => tts.pause();
+  const handleResume = () => tts.resume();
+  const handleStop = () => tts.stop();
+
+  const isTtsActive = ttsState !== TTS_STATE.IDLE;
+  const hasAssistantMsg = messages.some(m => m.role === 'assistant');
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#FDFBF7' }}>
@@ -476,21 +500,148 @@ const AITutor = () => {
             <Mic className={`w-5 h-5 mr-2 ${recording ? 'pulse-ring' : ''}`} /> 
             {recording ? 'Recording...' : 'Voice Input'}
           </Button>
+
+          {/* Read Aloud — toggles TTS settings panel */}
           <Button 
             data-testid="voice-output-btn" 
             variant="outline" 
             className="rounded-2xl flex-1" 
-            style={{ color: speaking ? '#E69C9C' : '#757873' }}
-            onClick={() => handleReadAloud()}
-            disabled={messages.length === 0 || !messages.some(m => m.role === 'assistant')}
+            style={{ color: isTtsActive ? '#E69C9C' : '#757873' }}
+            onClick={() => {
+              if (isTtsActive) { handleStop(); }
+              else { handleReadAloud(); }
+            }}
+            disabled={!hasAssistantMsg}
           >
-            {speaking ? (
-              <><VolumeX className="w-5 h-5 mr-2" /> Stop Reading</>
+            {ttsState === TTS_STATE.LOADING ? (
+              <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Preparing...</>
+            ) : isTtsActive ? (
+              <><VolumeX className="w-5 h-5 mr-2" /> Stop</>
             ) : (
               <><Volume2 className="w-5 h-5 mr-2" /> Read Aloud</>
             )}
           </Button>
+
+          {/* Settings toggle */}
+          <Button
+            data-testid="tts-settings-btn"
+            variant="outline"
+            className="rounded-2xl"
+            style={{ color: showTtsPanel ? '#8ABF9B' : '#757873', minWidth: '48px' }}
+            onClick={() => setShowTtsPanel(p => !p)}
+            title="Voice settings"
+          >
+            <Settings2 className="w-5 h-5" />
+            <ChevronDown className={`w-3 h-3 ml-1 transition-transform ${showTtsPanel ? 'rotate-180' : ''}`} />
+          </Button>
         </div>
+
+        {/* TTS Control Panel */}
+        {showTtsPanel && (
+          <div 
+            data-testid="tts-control-panel"
+            className="mt-3 p-5 rounded-2xl scale-in"
+            style={{ backgroundColor: '#F3F5F2', border: '1px solid rgba(138,191,155,0.25)' }}
+          >
+            {/* Playback controls row */}
+            {isTtsActive && (
+              <div className="flex items-center gap-2 mb-4 pb-4" style={{ borderBottom: '1px solid rgba(138,191,155,0.15)' }}>
+                <span className="text-xs font-semibold mr-2" style={{ color: '#757873' }}>Now playing</span>
+                {ttsState === TTS_STATE.LOADING && (
+                  <Loader2 className="w-4 h-4 animate-spin" style={{ color: '#8ABF9B' }} />
+                )}
+                {ttsState === TTS_STATE.SPEAKING && (
+                  <Button
+                    data-testid="tts-pause-btn"
+                    size="sm"
+                    variant="outline"
+                    className="rounded-xl h-8 px-3"
+                    onClick={handlePause}
+                    style={{ color: '#F2C48D', borderColor: '#F2C48D' }}
+                  >
+                    <Pause className="w-4 h-4 mr-1" /> Pause
+                  </Button>
+                )}
+                {ttsState === TTS_STATE.PAUSED && (
+                  <Button
+                    data-testid="tts-resume-btn"
+                    size="sm"
+                    variant="outline"
+                    className="rounded-xl h-8 px-3"
+                    onClick={handleResume}
+                    style={{ color: '#8ABF9B', borderColor: '#8ABF9B' }}
+                  >
+                    <Play className="w-4 h-4 mr-1" /> Resume
+                  </Button>
+                )}
+                {(ttsState === TTS_STATE.SPEAKING || ttsState === TTS_STATE.PAUSED) && (
+                  <Button
+                    data-testid="tts-stop-btn"
+                    size="sm"
+                    variant="outline"
+                    className="rounded-xl h-8 px-3"
+                    onClick={handleStop}
+                    style={{ color: '#E69C9C', borderColor: '#E69C9C' }}
+                  >
+                    <Square className="w-3 h-3 mr-1" /> Stop
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {/* Voice & Speed row */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              {/* Voice selector */}
+              <div className="flex-1">
+                <label className="block text-xs font-semibold mb-1.5" style={{ color: '#757873' }}>Voice</label>
+                <select
+                  data-testid="tts-voice-select"
+                  value={selectedVoiceURI}
+                  onChange={e => handleVoiceChange(e.target.value)}
+                  className="w-full rounded-xl px-3 py-2 text-sm"
+                  style={{
+                    backgroundColor: '#FDFBF7',
+                    border: '1px solid rgba(138,191,155,0.3)',
+                    color: '#1A1C19',
+                    outline: 'none'
+                  }}
+                >
+                  {ttsVoices.length === 0 && <option value="">Loading voices...</option>}
+                  {ttsVoices.map(v => (
+                    <option key={v.voiceURI} value={v.voiceURI}>
+                      {v.name} {v.localService ? '' : '(online)'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Speed control */}
+              <div className="flex-1">
+                <label className="block text-xs font-semibold mb-1.5" style={{ color: '#757873' }}>
+                  Speed: <span style={{ color: '#8ABF9B' }}>{speechRate.toFixed(1)}x</span>
+                </label>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs" style={{ color: '#9EADCC' }}>0.5x</span>
+                  <input
+                    data-testid="tts-speed-slider"
+                    type="range"
+                    min="0.5"
+                    max="2.0"
+                    step="0.1"
+                    value={speechRate}
+                    onChange={e => handleRateChange(e.target.value)}
+                    className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer"
+                    style={{
+                      background: `linear-gradient(to right, #8ABF9B ${((speechRate - 0.5) / 1.5) * 100}%, #D9DCD6 ${((speechRate - 0.5) / 1.5) * 100}%)`,
+                      accentColor: '#8ABF9B'
+                    }}
+                  />
+                  <span className="text-xs" style={{ color: '#9EADCC' }}>2.0x</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
