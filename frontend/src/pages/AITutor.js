@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, Send, Mic, Volume2, Sparkles, BookOpen, Calculator, Globe } from 'lucide-react';
+import { ArrowLeft, Send, Mic, Volume2, Sparkles, BookOpen, Calculator, Globe, Lightbulb, Smile, HelpCircle, Eye, Dumbbell, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { API, getAuthToken } from '../App';
@@ -16,7 +16,9 @@ const AITutor = () => {
   const [recording, setRecording] = useState(false);
   const [sessionId] = useState(`session_${Date.now()}`);
   const [suggestedTopics, setSuggestedTopics] = useState([]);
+  const [followUpSuggestions, setFollowUpSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(true);
+  const [lastAIResponse, setLastAIResponse] = useState('');
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -61,8 +63,40 @@ const AITutor = () => {
 
       const aiMessage = { role: 'assistant', content: response.data.response };
       setMessages(prev => [...prev, aiMessage]);
+      setLastAIResponse(response.data.response);
+      
+      if (response.data.follow_ups) {
+        setFollowUpSuggestions(response.data.follow_ups);
+      }
     } catch (error) {
       toast.error('Failed to get response from tutor');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleQuickAction = async (action) => {
+    if (!lastAIResponse) return;
+    
+    setLoading(true);
+    try {
+      const response = await axios.post(
+        `${API}/chat/quick-action`,
+        {
+          action,
+          last_response: lastAIResponse,
+          session_id: sessionId
+        },
+        { headers: { Authorization: `Bearer ${getAuthToken()}` } }
+      );
+
+      const aiMessage = { role: 'assistant', content: response.data.response };
+      setMessages(prev => [...prev, aiMessage]);
+      setLastAIResponse(response.data.response);
+      
+      toast.success('Got it! Here\'s a different way to explain it.');
+    } catch (error) {
+      toast.error('Failed to process quick action');
     } finally {
       setLoading(false);
     }
@@ -71,6 +105,10 @@ const AITutor = () => {
   const handleTopicClick = (topic) => {
     setInputMessage(topic);
     handleSendMessage(topic);
+  };
+
+  const handleFollowUpClick = (followUp) => {
+    handleSendMessage(followUp);
   };
 
   const handleVoiceInput = async () => {
@@ -159,7 +197,7 @@ const AITutor = () => {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#FDFBF7' }}>
-      <div className="max-w-4xl mx-auto w-full px-8 py-12 flex flex-col flex-1">
+      <div className="max-w-5xl mx-auto w-full px-8 py-12 flex flex-col flex-1">
         <div className="flex items-center mb-8 fade-in">
           <Button data-testid="back-to-dashboard-btn" variant="ghost" onClick={() => navigate('/dashboard')} className="rounded-full">
             <ArrowLeft className="mr-2 w-5 h-5" /> Back
@@ -174,25 +212,27 @@ const AITutor = () => {
               className="w-20 h-20 rounded-full"
               style={{ boxShadow: '0 8px 24px rgba(138, 191, 155, 0.3)' }}
             />
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #8ABF9B, #78AB89)' }}>
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center pulse-ring" style={{ background: 'linear-gradient(135deg, #8ABF9B, #78AB89)' }}>
               <Sparkles className="w-3 h-3" style={{ color: '#FFF' }} />
             </div>
           </div>
           <div>
             <h1 data-testid="tutor-title" className="text-4xl font-bold" style={{ fontFamily: 'Nunito', color: '#1A1C19' }}>
-              AI Tutor
+              NeuroBuddy AI Tutor
             </h1>
-            <p style={{ color: '#4A4D48' }}>Your personal learning companion</p>
+            <p style={{ color: '#4A4D48' }}>Your personal adaptive learning companion</p>
           </div>
         </div>
 
-        <div data-testid="chat-container" className="flex-1 p-8 rounded-3xl mb-6 overflow-y-auto glass" style={{ minHeight: '400px', maxHeight: '500px' }}>
+        <div data-testid="chat-container" className="flex-1 p-8 rounded-3xl mb-6 overflow-y-auto glass" style={{ minHeight: '450px', maxHeight: '550px' }}>
           {messages.length === 0 ? (
             <div className="text-center fade-in">
               <Sparkles className="w-16 h-16 mx-auto mb-4" style={{ color: '#8ABF9B' }} />
-              <p className="text-lg font-semibold mb-2" style={{ color: '#1A1C19' }}>Hi! I'm NeuroBuddy 👋</p>
-              <p style={{ color: '#757873' }}>Your AI learning companion ready to help!</p>
-              <p className="mt-2 text-sm" style={{ color: '#757873' }}>Ask me anything about your lessons or try a topic below:</p>
+              <p className="text-xl font-semibold mb-2" style={{ color: '#1A1C19' }}>Hi! I'm NeuroBuddy 👋</p>
+              <p className="mb-2" style={{ color: '#757873' }}>Your AI learning companion ready to help!</p>
+              <p className="text-sm mb-6" style={{ color: '#757873' }}>
+                I'll adapt my explanations to your learning style and help you understand any topic.
+              </p>
               
               {showSuggestions && suggestedTopics.length > 0 && (
                 <div className="mt-6 grid grid-cols-1 gap-3">
@@ -235,7 +275,8 @@ const AITutor = () => {
                         p: ({node, ...props}) => <p style={{ marginBottom: '0.5rem' }} {...props} />,
                         ul: ({node, ...props}) => <ul style={{ marginLeft: '1.5rem', marginBottom: '0.5rem' }} {...props} />,
                         ol: ({node, ...props}) => <ol style={{ marginLeft: '1.5rem', marginBottom: '0.5rem' }} {...props} />,
-                        li: ({node, ...props}) => <li style={{ marginBottom: '0.25rem' }} {...props} />
+                        li: ({node, ...props}) => <li style={{ marginBottom: '0.25rem' }} {...props} />,
+                        h3: ({node, ...props}) => <h3 style={{ fontSize: '1.1rem', fontWeight: '600', marginTop: '0.75rem', marginBottom: '0.5rem', color: '#8ABF9B' }} {...props} />
                       }}
                     >
                       {msg.content}
@@ -258,6 +299,79 @@ const AITutor = () => {
             </div>
           )}
         </div>
+
+        {/* Quick Action Buttons */}
+        {messages.length > 0 && !loading && (
+          <div className="mb-4 flex flex-wrap gap-2 scale-in">
+            <button
+              onClick={() => handleQuickAction('simpler')}
+              className="px-4 py-2 rounded-full text-sm flex items-center gap-2 card hover:scale-105 transition-all"
+              style={{ cursor: 'pointer' }}
+            >
+              <Smile className="w-4 h-4" style={{ color: '#8ABF9B' }} />
+              <span style={{ color: '#1A1C19' }}>Explain Simpler</span>
+            </button>
+
+            <button
+              onClick={() => handleQuickAction('example')}
+              className="px-4 py-2 rounded-full text-sm flex items-center gap-2 card hover:scale-105 transition-all"
+              style={{ cursor: 'pointer' }}
+            >
+              <Lightbulb className="w-4 h-4" style={{ color: '#F2C48D' }} />
+              <span style={{ color: '#1A1C19' }}>Give Example</span>
+            </button>
+
+            <button
+              onClick={() => handleQuickAction('visual')}
+              className="px-4 py-2 rounded-full text-sm flex items-center gap-2 card hover:scale-105 transition-all"
+              style={{ cursor: 'pointer' }}
+            >
+              <Eye className="w-4 h-4" style={{ color: '#9EADCC' }} />
+              <span style={{ color: '#1A1C19' }}>Show Visually</span>
+            </button>
+
+            <button
+              onClick={() => handleQuickAction('practice')}
+              className="px-4 py-2 rounded-full text-sm flex items-center gap-2 card hover:scale-105 transition-all"
+              style={{ cursor: 'pointer' }}
+            >
+              <Dumbbell className="w-4 h-4" style={{ color: '#A3D9A5' }} />
+              <span style={{ color: '#1A1C19' }}>Practice Problem</span>
+            </button>
+
+            <button
+              onClick={() => handleQuickAction('confused')}
+              className="px-4 py-2 rounded-full text-sm flex items-center gap-2 card hover:scale-105 transition-all"
+              style={{ cursor: 'pointer' }}
+            >
+              <HelpCircle className="w-4 h-4" style={{ color: '#E69C9C' }} />
+              <span style={{ color: '#1A1C19' }}>I'm Confused</span>
+            </button>
+          </div>
+        )}
+
+        {/* Follow-up Suggestions */}
+        {followUpSuggestions.length > 0 && !loading && (
+          <div className="mb-4 flex flex-wrap gap-2 scale-in">
+            <span className="text-sm font-semibold" style={{ color: '#757873', alignSelf: 'center', marginRight: '8px' }}>Ask next:</span>
+            {followUpSuggestions.map((suggestion, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleFollowUpClick(suggestion)}
+                className="px-3 py-1.5 rounded-full text-sm flex items-center gap-2 hover:scale-105 transition-all"
+                style={{ 
+                  background: 'linear-gradient(135deg, rgba(138, 191, 155, 0.1), rgba(158, 173, 204, 0.1))',
+                  border: '1px solid rgba(138, 191, 155, 0.3)',
+                  cursor: 'pointer',
+                  color: '#1A1C19'
+                }}
+              >
+                {suggestion}
+                <ArrowRight className="w-3 h-3" style={{ color: '#8ABF9B' }} />
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className="flex gap-4 scale-in">
           <Input

@@ -293,33 +293,109 @@ async def send_chat_message(message_data: ChatMessageCreate, current_user: dict 
     user_msg_dict['created_at'] = user_msg_dict['created_at'].isoformat()
     await db.chat_messages.insert_one(user_msg_dict)
     
+    # Get learning profile for personalization
     profile = await db.learning_profiles.find_one({"user_id": current_user['id']}, {"_id": 0})
     
-    system_message = f"""You are NeuroBuddy, an expert AI tutor specifically trained to support neurodiverse students (Autism, ADHD, Dyslexia). 
+    # Get recent chat history for context
+    recent_messages = await db.chat_messages.find(
+        {"user_id": current_user['id'], "session_id": message_data.session_id},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(10).to_list(10)
+    
+    # Analyze conversation for difficulty adjustment
+    recent_user_messages = [msg for msg in recent_messages if msg['role'] == 'user']
+    confusion_indicators = ['confused', 'don\'t understand', 'what', 'why', 'how', 'explain', 'help']
+    is_confused = any(indicator in message_data.message.lower() for indicator in confusion_indicators)
+    
+    system_message = f"""You are NeuroBuddy, an expert AI tutor specialized in teaching neurodiverse students (Autism, ADHD, Dyslexia). You're patient, encouraging, and adaptive.
 
-Your teaching approach:
-1. **Break Down Complex Topics**: Always explain concepts step-by-step, starting with the simplest foundation
-2. **Use Multiple Representations**: Provide visual descriptions, analogies, and real-world examples
-3. **Be Patient & Encouraging**: Celebrate small wins, use positive reinforcement
-4. **Adapt to Learning Style**: The student learns best through {profile.get('learning_style', 'multiple modalities') if profile else 'multiple modalities'}
-5. **Check Understanding**: Ask simple questions to verify comprehension before moving forward
-6. **Provide Structure**: Use numbered lists, clear headings, and organized responses
+🎯 **CORE TEACHING PHILOSOPHY**:
+You believe every student can learn - they just need the right approach. You use multi-sensory teaching, clear structure, and celebrate small wins.
 
-Student Profile:
+👤 **STUDENT PROFILE**:
 - Name: {current_user['name']}
-- Learning Style: {profile.get('learning_style', 'Visual/Kinesthetic') if profile else 'Not yet determined'}
-- Attention Level: {profile.get('attention_level', 'Moderate') if profile else 'Not yet determined'}
-- Areas needing support: {', '.join(profile.get('weaknesses', [])) if profile and profile.get('weaknesses') else 'Still being assessed'}
+- Learning Style: {profile.get('learning_style', 'Visual/Kinesthetic') if profile else 'Discovering...'}
+- Attention Level: {profile.get('attention_level', 'Moderate') if profile else 'Assessing...'}
+- Reading Difficulty: {profile.get('reading_difficulty', 'Unknown') if profile else 'Assessing...'}
+- Areas to support: {', '.join(profile.get('weaknesses', ['General learning'])) if profile and profile.get('weaknesses') else 'Building profile...'}
+- Strengths: {', '.join(profile.get('strengths', ['Discovering'])) if profile and profile.get('strengths') else 'Discovering...'}
 
-For each response:
-- Start with a simple, one-sentence summary
-- Then provide detailed explanation with examples
-- Use formatting: **bold** for key terms, numbered lists for steps
-- End with a quick comprehension question or next step
-- Keep paragraphs short (2-3 sentences max)
-- Use emojis sparingly and only when they aid understanding
+🎓 **YOUR TEACHING APPROACH** (The SCAFFOLD Method):
 
-Remember: You're not just answering questions - you're building confidence and understanding!"""
+**S - Start Simple**: Always begin with the simplest possible explanation
+**C - Check Understanding**: Ask verification questions frequently  
+**A - Add Examples**: Use concrete, relatable real-world examples
+**F - Format Clearly**: Use structure (numbered lists, headers, short paragraphs)
+**F - Foster Connection**: Build on what they already know
+**O - Offer Multiple Paths**: Provide visual, verbal, and kinesthetic descriptions
+**L - Link to Life**: Connect concepts to their daily experiences
+**D - Develop Confidence**: Celebrate understanding, encourage questions
+
+📚 **RESPONSE STRUCTURE** (Follow this template):
+
+1. **Quick Answer** (1 sentence summary)
+2. **Simple Explanation** (ELI5 - Explain Like I'm 5)
+3. **Detailed Breakdown** (Step-by-step with examples)
+4. **Real-World Connection** (How it applies to their life)
+5. **Visual Description** (Paint a mental picture)
+6. **Check Understanding** (Question to verify comprehension)
+7. **Next Steps** (What to explore next)
+
+🎨 **FORMATTING RULES**:
+- Use **bold** for key terms (first mention only)
+- Use numbered lists for steps/processes
+- Use bullet points for related items
+- Keep paragraphs to 2-3 sentences MAX
+- Use emojis sparingly (🎯📚✨💡) only to enhance understanding
+- Add line breaks between sections
+- Use analogies and metaphors frequently
+
+🧠 **ADAPTIVE TEACHING**:
+{f"⚠️ STUDENT SEEMS CONFUSED - Simplify explanation, use more examples, break into smaller steps" if is_confused else "✓ Student seems engaged - maintain current level"}
+
+Learning Style Adaptation:
+{f"- **Visual Learner**: Describe what things look like, use color/shape analogies, suggest drawing" if profile and profile.get('learning_style') == 'Visual' else ""}
+{f"- **Kinesthetic Learner**: Describe physical actions, use movement analogies, suggest hands-on practice" if profile and profile.get('learning_style') == 'Kinesthetic' else ""}
+{f"- **Auditory Learner**: Use rhythm/patterns, verbal mnemonics, encourage reading aloud" if profile and profile.get('learning_style') == 'Auditory' else ""}
+
+🗣️ **CONVERSATION STYLE**:
+- Be warm and encouraging ("Great question!", "You're thinking like a scientist!")
+- Use their name occasionally
+- Reference previous topics when relevant
+- Show excitement about learning
+- Normalize mistakes ("That's a smart mistake to make!")
+- Use inclusive language ("Let's figure this out together")
+
+❌ **NEVER**:
+- Use complex jargon without explanation
+- Write long paragraphs (max 3 sentences)
+- Assume prior knowledge
+- Be condescending or patronizing
+- Give up or say "it's too complex"
+- Use abstract explanations without concrete examples
+
+✅ **ALWAYS**:
+- Start with what they know
+- Use concrete before abstract
+- Provide multiple examples
+- Check understanding frequently
+- Celebrate partial understanding
+- Offer to explain differently if needed
+- End with an actionable next step or question
+
+🎯 **SOCRATIC METHOD**:
+When appropriate, guide discovery through questions:
+- "What do you think might happen if...?"
+- "Can you think of something similar you've seen before?"
+- "What patterns do you notice?"
+
+🔄 **METACOGNITION**:
+Help them think about their thinking:
+- "What strategy did you use to figure that out?"
+- "What part makes sense? What part is tricky?"
+- "How could you remember this?"
+
+Remember: Your goal isn't just to answer questions - it's to build **understanding**, **confidence**, and **love of learning**!"""
     
     try:
         chat = LlmChat(
@@ -342,7 +418,10 @@ Remember: You're not just answering questions - you're building confidence and u
         ai_msg_dict['created_at'] = ai_msg_dict['created_at'].isoformat()
         await db.chat_messages.insert_one(ai_msg_dict)
         
-        return {"response": response}
+        # Generate follow-up suggestions
+        follow_ups = await generate_follow_up_suggestions(response, message_data.message)
+        
+        return {"response": response, "follow_ups": follow_ups}
     except Exception as e:
         logging.error(f"Chat error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Chat service error: {str(e)}")
@@ -379,6 +458,99 @@ async def get_suggested_topics(current_user: dict = Depends(get_current_user)):
         return {"topics": weakness_topics + base_topics[:2]}
     
     return {"topics": base_topics}
+
+async def generate_follow_up_suggestions(ai_response: str, user_question: str) -> list:
+    """Generate contextual follow-up suggestions based on the conversation."""
+    follow_ups = []
+    
+    # Content-based suggestions
+    if any(word in ai_response.lower() for word in ['because', 'reason', 'why']):
+        follow_ups.append("Can you give me another example?")
+    
+    if any(word in ai_response.lower() for word in ['step', 'process', 'first']):
+        follow_ups.append("What happens if I skip a step?")
+    
+    if any(word in user_question.lower() for word in ['what', 'explain']):
+        follow_ups.append("Why is this important?")
+    
+    # Always include helpful options
+    follow_ups.extend([
+        "Explain this simpler",
+        "Give me a real-life example",
+        "What should I learn next?"
+    ])
+    
+    # Return max 4 unique suggestions
+    return list(dict.fromkeys(follow_ups))[:4]
+
+@api_router.post("/chat/quick-action")
+async def chat_quick_action(
+    action: str,
+    last_response: str,
+    session_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Handle quick action buttons like 'Explain Simpler', 'Give Example', etc."""
+    
+    action_prompts = {
+        "simpler": f"Can you explain that last answer in even simpler terms? Pretend I'm 8 years old. Here was your previous response: {last_response[:200]}...",
+        "example": f"Can you give me a concrete, real-world example of what you just explained? Here was your previous response: {last_response[:200]}...",
+        "visual": f"Can you describe what this looks like visually? Help me picture it in my mind. Here was your previous response: {last_response[:200]}...",
+        "practice": f"Can you give me a simple practice problem or exercise to try? Here was your previous response: {last_response[:200]}...",
+        "confused": f"I'm still confused about this. Can you break it down into smaller steps? Here was your previous response: {last_response[:200]}...",
+        "next": "What should I learn next related to this topic?"
+    }
+    
+    prompt = action_prompts.get(action, last_response)
+    
+    # Create user message
+    user_message_obj = ChatMessage(
+        user_id=current_user['id'],
+        session_id=session_id,
+        role="user",
+        content=prompt
+    )
+    
+    user_msg_dict = user_message_obj.model_dump()
+    user_msg_dict['created_at'] = user_msg_dict['created_at'].isoformat()
+    await db.chat_messages.insert_one(user_msg_dict)
+    
+    # Get AI response (simplified system message for quick actions)
+    try:
+        profile = await db.learning_profiles.find_one({"user_id": current_user['id']}, {"_id": 0})
+        
+        simplified_system = f"""You are NeuroBuddy, helping {current_user['name']} understand concepts better.
+
+Action requested: {action}
+
+Adapt to their learning style: {profile.get('learning_style', 'Visual') if profile else 'Visual'}
+
+Keep it SHORT (3-4 sentences max), SIMPLE, and CLEAR."""
+        
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=session_id,
+            system_message=simplified_system
+        ).with_model("openai", "gpt-5.2")
+        
+        user_msg = UserMessage(text=prompt)
+        response = await chat.send_message(user_msg)
+        
+        ai_message_obj = ChatMessage(
+            user_id=current_user['id'],
+            session_id=session_id,
+            role="assistant",
+            content=response
+        )
+        
+        ai_msg_dict = ai_message_obj.model_dump()
+        ai_msg_dict['created_at'] = ai_msg_dict['created_at'].isoformat()
+        await db.chat_messages.insert_one(ai_msg_dict)
+        
+        return {"response": response}
+    except Exception as e:
+        logging.error(f"Quick action error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.get("/analytics/dashboard")
 async def get_analytics_dashboard(current_user: dict = Depends(get_current_user)):
