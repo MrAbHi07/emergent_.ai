@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, Send, Mic, Volume2, Sparkles, BookOpen, Calculator, Globe, Lightbulb, Smile, HelpCircle, Eye, Dumbbell, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Send, Mic, Volume2, VolumeX, Sparkles, BookOpen, Calculator, Globe, Lightbulb, Smile, HelpCircle, Eye, Dumbbell, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { API, getAuthToken } from '../App';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 import VoiceTranscription from '../utils/voiceTranscription';
+import tts from '../utils/textToSpeech';
 
 const AITutor = () => {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ const AITutor = () => {
   const [followUpSuggestions, setFollowUpSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [lastAIResponse, setLastAIResponse] = useState('');
+  const [speaking, setSpeaking] = useState(false);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -28,6 +30,12 @@ const AITutor = () => {
 
   useEffect(() => {
     fetchSuggestedTopics();
+    // Pre-load TTS voices early so they're ready when needed
+    if (tts.isSupported()) {
+      tts.loadVoices();
+      tts.onStateChange = (isSpeaking) => setSpeaking(isSpeaking);
+    }
+    return () => { tts.stop(); };
   }, []);
 
   const scrollToBottom = () => {
@@ -212,31 +220,36 @@ const AITutor = () => {
     }
   };
 
-  const handleReadAloud = async () => {
-    if (messages.length === 0) return;
+  const handleReadAloud = async (textOverride) => {
+    // If currently speaking, stop
+    if (speaking) {
+      tts.stop();
+      return;
+    }
 
-    const lastAIMessage = [...messages].reverse().find(m => m.role === 'assistant');
-    if (!lastAIMessage) {
-      toast.error('No AI message to read');
+    if (!tts.isSupported()) {
+      toast.error('Text-to-Speech is not supported in your browser. Try Chrome, Edge, or Safari.');
+      return;
+    }
+
+    // Use explicit text or fall back to the last AI message
+    const text = textOverride || (() => {
+      const lastAI = [...messages].reverse().find(m => m.role === 'assistant');
+      return lastAI?.content;
+    })();
+
+    if (!text) {
+      toast.error('No message to read aloud yet.');
       return;
     }
 
     try {
-      const response = await axios.post(
-        `${API}/voice/synthesize?text=${encodeURIComponent(lastAIMessage.content)}`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${getAuthToken()}` },
-          responseType: 'blob'
-        }
-      );
-
-      const audioUrl = URL.createObjectURL(response.data);
-      const audio = new Audio(audioUrl);
-      audio.play();
-      toast.success('Playing audio...');
-    } catch (error) {
-      toast.error('Failed to generate speech');
+      toast.info('Reading aloud...', { id: 'tts-toast', duration: 3000 });
+      await tts.speak(text);
+      toast.dismiss('tts-toast');
+    } catch (err) {
+      toast.dismiss('tts-toast');
+      toast.error(err.message || 'Speech failed. Please try again.');
     }
   };
 
@@ -313,19 +326,30 @@ const AITutor = () => {
                   }}
                 >
                   {msg.role === 'assistant' ? (
-                    <ReactMarkdown
-                      components={{
-                        strong: ({node, ...props}) => <strong style={{ color: '#8ABF9B', fontWeight: 700 }} {...props} />,
-                        em: ({node, ...props}) => <em style={{ fontStyle: 'italic', color: '#4A4D48' }} {...props} />,
-                        p: ({node, ...props}) => <p style={{ marginBottom: '0.5rem' }} {...props} />,
-                        ul: ({node, ...props}) => <ul style={{ marginLeft: '1.5rem', marginBottom: '0.5rem' }} {...props} />,
-                        ol: ({node, ...props}) => <ol style={{ marginLeft: '1.5rem', marginBottom: '0.5rem' }} {...props} />,
-                        li: ({node, ...props}) => <li style={{ marginBottom: '0.25rem' }} {...props} />,
-                        h3: ({node, ...props}) => <h3 style={{ fontSize: '1.1rem', fontWeight: '600', marginTop: '0.75rem', marginBottom: '0.5rem', color: '#8ABF9B' }} {...props} />
-                      }}
-                    >
-                      {msg.content}
-                    </ReactMarkdown>
+                    <div>
+                      <ReactMarkdown
+                        components={{
+                          strong: ({node, ...props}) => <strong style={{ color: '#8ABF9B', fontWeight: 700 }} {...props} />,
+                          em: ({node, ...props}) => <em style={{ fontStyle: 'italic', color: '#4A4D48' }} {...props} />,
+                          p: ({node, ...props}) => <p style={{ marginBottom: '0.5rem' }} {...props} />,
+                          ul: ({node, ...props}) => <ul style={{ marginLeft: '1.5rem', marginBottom: '0.5rem' }} {...props} />,
+                          ol: ({node, ...props}) => <ol style={{ marginLeft: '1.5rem', marginBottom: '0.5rem' }} {...props} />,
+                          li: ({node, ...props}) => <li style={{ marginBottom: '0.25rem' }} {...props} />,
+                          h3: ({node, ...props}) => <h3 style={{ fontSize: '1.1rem', fontWeight: '600', marginTop: '0.75rem', marginBottom: '0.5rem', color: '#8ABF9B' }} {...props} />
+                        }}
+                      >
+                        {msg.content}
+                      </ReactMarkdown>
+                      <button
+                        data-testid={`read-msg-${index}`}
+                        onClick={() => handleReadAloud(msg.content)}
+                        className="mt-2 flex items-center gap-1 text-xs hover:opacity-80 transition-opacity"
+                        style={{ color: '#9EADCC' }}
+                        title="Read this message aloud"
+                      >
+                        <Volume2 className="w-3.5 h-3.5" /> Read
+                      </button>
+                    </div>
                   ) : (
                     msg.content
                   )}
@@ -456,10 +480,15 @@ const AITutor = () => {
             data-testid="voice-output-btn" 
             variant="outline" 
             className="rounded-2xl flex-1" 
-            style={{ color: '#757873' }}
-            onClick={handleReadAloud}
+            style={{ color: speaking ? '#E69C9C' : '#757873' }}
+            onClick={() => handleReadAloud()}
+            disabled={messages.length === 0 || !messages.some(m => m.role === 'assistant')}
           >
-            <Volume2 className="w-5 h-5 mr-2" /> Read Aloud
+            {speaking ? (
+              <><VolumeX className="w-5 h-5 mr-2" /> Stop Reading</>
+            ) : (
+              <><Volume2 className="w-5 h-5 mr-2" /> Read Aloud</>
+            )}
           </Button>
         </div>
       </div>

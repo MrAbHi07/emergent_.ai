@@ -483,14 +483,20 @@ async def generate_follow_up_suggestions(ai_response: str, user_question: str) -
     # Return max 4 unique suggestions
     return list(dict.fromkeys(follow_ups))[:4]
 
+class QuickActionRequest(BaseModel):
+    action: str
+    last_response: str
+    session_id: str
+
 @api_router.post("/chat/quick-action")
 async def chat_quick_action(
-    action: str,
-    last_response: str,
-    session_id: str,
+    request: QuickActionRequest,
     current_user: dict = Depends(get_current_user)
 ):
     """Handle quick action buttons like 'Explain Simpler', 'Give Example', etc."""
+    action = request.action
+    last_response = request.last_response
+    session_id = request.session_id
     
     action_prompts = {
         "simpler": f"Can you explain that last answer in even simpler terms? Pretend I'm 8 years old. Here was your previous response: {last_response[:200]}...",
