@@ -278,99 +278,80 @@ const AITutor = () => {
   const hasAssistantMsg = messages.some(m => m.role === 'assistant');
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#FDFBF7' }}>
-      <div className="max-w-5xl mx-auto w-full px-8 py-12 flex flex-col flex-1">
-        <div className="flex items-center mb-8 fade-in">
-          <Button data-testid="back-to-dashboard-btn" variant="ghost" onClick={() => navigate('/dashboard')} className="rounded-full">
+    <div className="min-h-screen flex flex-col relative" style={{ background: '#05050A' }}>
+      {/* Background orbs */}
+      <div className="absolute top-[-5%] right-[-5%] w-[400px] h-[400px] rounded-full opacity-10" style={{ background: 'radial-gradient(circle, rgba(251,191,36,0.3) 0%, transparent 70%)' }} />
+      <div className="absolute bottom-[10%] left-[-5%] w-[350px] h-[350px] rounded-full opacity-10" style={{ background: 'radial-gradient(circle, rgba(52,211,153,0.3) 0%, transparent 70%)' }} />
+
+      <div className="relative z-10 max-w-5xl mx-auto w-full px-8 py-10 flex flex-col flex-1">
+        <div className="flex items-center mb-6 fade-in">
+          <Button data-testid="back-to-dashboard-btn" variant="ghost" onClick={() => navigate('/dashboard')} className="rounded-full text-slate-400 hover:text-white hover:bg-white/10">
             <ArrowLeft className="mr-2 w-5 h-5" /> Back
           </Button>
         </div>
 
-        <div className="flex items-center gap-4 mb-8 slide-up">
+        <div className="flex items-center gap-4 mb-6 slide-up">
           <div className="relative">
-            <img
-              src="https://images.unsplash.com/photo-1659018966820-de07c94e0d01?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzV8MHwxfHNlYXJjaHwyfHxjdXRlJTIwM2QlMjByb2JvdCUyMGNoYXJhY3RlcnxlbnwwfHx8fDE3NzQ4NTAzNzV8MA&ixlib=rb-4.1.0&q=85"
-              alt="AI Tutor"
-              className="w-20 h-20 rounded-full"
-              style={{ boxShadow: '0 8px 24px rgba(138, 191, 155, 0.3)' }}
-            />
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center pulse-ring" style={{ background: 'linear-gradient(135deg, #8ABF9B, #78AB89)' }}>
-              <Sparkles className="w-3 h-3" style={{ color: '#FFF' }} />
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(52,211,153,0.15), rgba(251,191,36,0.1))', border: '1px solid rgba(52,211,153,0.2)', boxShadow: '0 0 30px rgba(52,211,153,0.15)' }}>
+              <Sparkles className="w-8 h-8" style={{ color: '#34D399' }} />
+            </div>
+            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center pulse-ring" style={{ background: '#34D399' }}>
+              <Sparkles className="w-2.5 h-2.5" style={{ color: '#05050A' }} />
             </div>
           </div>
           <div>
-            <h1 data-testid="tutor-title" className="text-4xl font-bold" style={{ fontFamily: 'Nunito', color: '#1A1C19' }}>
+            <h1 data-testid="tutor-title" className="text-3xl font-light tracking-tight" style={{ fontFamily: 'Outfit', color: '#F8FAFC' }}>
               NeuroBuddy AI Tutor
             </h1>
-            <p style={{ color: '#4A4D48' }}>Your personal adaptive learning companion</p>
+            <p className="text-sm" style={{ color: '#94A3B8' }}>Your personal adaptive learning companion</p>
           </div>
         </div>
 
-        <div data-testid="chat-container" className="flex-1 p-8 rounded-3xl mb-6 overflow-y-auto glass" style={{ minHeight: '450px', maxHeight: '550px' }}>
+        {/* Chat container */}
+        <div data-testid="chat-container" className="flex-1 p-6 rounded-2xl mb-5 overflow-y-auto" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(20px)', minHeight: '400px', maxHeight: '500px' }}>
           {messages.length === 0 ? (
             <div className="text-center fade-in">
-              <Sparkles className="w-16 h-16 mx-auto mb-4" style={{ color: '#8ABF9B' }} />
-              <p className="text-xl font-semibold mb-2" style={{ color: '#1A1C19' }}>Hi! I'm NeuroBuddy 👋</p>
-              <p className="mb-2" style={{ color: '#757873' }}>Your AI learning companion ready to help!</p>
-              <p className="text-sm mb-6" style={{ color: '#757873' }}>
-                I'll adapt my explanations to your learning style and help you understand any topic.
-              </p>
+              <Sparkles className="w-14 h-14 mx-auto mb-4" style={{ color: '#34D399' }} />
+              <p className="text-lg font-medium mb-1" style={{ color: '#F8FAFC' }}>Hi! I'm NeuroBuddy</p>
+              <p className="text-sm mb-1" style={{ color: '#94A3B8' }}>Your AI learning companion ready to help!</p>
+              <p className="text-xs mb-6" style={{ color: '#64748B' }}>I'll adapt my explanations to your learning style.</p>
               
               {showSuggestions && suggestedTopics.length > 0 && (
-                <div className="mt-6 grid grid-cols-1 gap-3">
-                  {suggestedTopics.map((topic, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => handleTopicClick(topic)}
-                      className="card p-4 text-left flex items-center gap-3 hover:scale-105 transition-all"
-                      style={{ cursor: 'pointer' }}
-                    >
-                      {idx === 0 && <Calculator className="w-5 h-5" style={{ color: '#8ABF9B' }} />}
-                      {idx === 1 && <BookOpen className="w-5 h-5" style={{ color: '#F2C48D' }} />}
-                      {idx === 2 && <Globe className="w-5 h-5" style={{ color: '#9EADCC' }} />}
-                      {idx === 3 && <Sparkles className="w-5 h-5" style={{ color: '#A3D9A5' }} />}
-                      <span style={{ color: '#1A1C19' }}>{topic}</span>
-                    </button>
-                  ))}
+                <div className="mt-6 grid grid-cols-1 gap-2.5">
+                  {suggestedTopics.map((topic, idx) => {
+                    const colors = ['#34D399', '#FBBF24', '#38BDF8', '#A78BFA'];
+                    const Icons = [Calculator, BookOpen, Globe, Sparkles];
+                    const TopicIcon = Icons[idx] || Sparkles;
+                    return (
+                      <button key={idx} onClick={() => handleTopicClick(topic)} className="p-3.5 rounded-xl text-left flex items-center gap-3 transition-all hover:-translate-y-0.5" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}>
+                        <TopicIcon className="w-4 h-4" style={{ color: colors[idx] }} />
+                        <span className="text-sm" style={{ color: '#CBD5E1' }}>{topic}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
           ) : (
             <div className="space-y-4">
               {messages.map((msg, index) => (
-                <div
-                  key={index}
-                  data-testid={`chat-message-${msg.role}-${index}`}
-                  className={`chat-bubble ${msg.role}`}
-                  style={{
-                    backgroundColor: msg.role === 'user' ? '#8ABF9B' : 'rgba(253, 251, 247, 0.95)',
-                    marginLeft: msg.role === 'user' ? 'auto' : '0',
-                    color: '#1A1C19',
-                    backdropFilter: msg.role === 'assistant' ? 'blur(10px)' : 'none'
-                  }}
-                >
+                <div key={index} data-testid={`chat-message-${msg.role}-${index}`} className={`chat-bubble ${msg.role}`}>
                   {msg.role === 'assistant' ? (
                     <div>
                       <ReactMarkdown
                         components={{
-                          strong: ({node, ...props}) => <strong style={{ color: '#8ABF9B', fontWeight: 700 }} {...props} />,
-                          em: ({node, ...props}) => <em style={{ fontStyle: 'italic', color: '#4A4D48' }} {...props} />,
+                          strong: ({node, ...props}) => <strong style={{ color: '#34D399', fontWeight: 600 }} {...props} />,
+                          em: ({node, ...props}) => <em style={{ fontStyle: 'italic', color: '#94A3B8' }} {...props} />,
                           p: ({node, ...props}) => <p style={{ marginBottom: '0.5rem' }} {...props} />,
                           ul: ({node, ...props}) => <ul style={{ marginLeft: '1.5rem', marginBottom: '0.5rem' }} {...props} />,
                           ol: ({node, ...props}) => <ol style={{ marginLeft: '1.5rem', marginBottom: '0.5rem' }} {...props} />,
                           li: ({node, ...props}) => <li style={{ marginBottom: '0.25rem' }} {...props} />,
-                          h3: ({node, ...props}) => <h3 style={{ fontSize: '1.1rem', fontWeight: '600', marginTop: '0.75rem', marginBottom: '0.5rem', color: '#8ABF9B' }} {...props} />
+                          h3: ({node, ...props}) => <h3 style={{ fontSize: '1.05rem', fontWeight: '600', marginTop: '0.75rem', marginBottom: '0.5rem', color: '#34D399' }} {...props} />
                         }}
                       >
                         {msg.content}
                       </ReactMarkdown>
-                      <button
-                        data-testid={`read-msg-${index}`}
-                        onClick={() => handleReadAloud(msg.content)}
-                        className="mt-2 flex items-center gap-1 text-xs hover:opacity-80 transition-opacity"
-                        style={{ color: '#9EADCC' }}
-                        title="Read this message aloud"
-                      >
+                      <button data-testid={`read-msg-${index}`} onClick={() => handleReadAloud(msg.content)} className="mt-2 flex items-center gap-1 text-xs hover:opacity-80 transition-opacity" style={{ color: '#64748B' }} title="Read this message aloud">
                         <Volume2 className="w-3.5 h-3.5" /> Read
                       </button>
                     </div>
@@ -380,7 +361,7 @@ const AITutor = () => {
                 </div>
               ))}
               {loading && (
-                <div data-testid="typing-indicator" className="chat-bubble assistant" style={{ backgroundColor: 'rgba(253, 251, 247, 0.95)', backdropFilter: 'blur(10px)' }}>
+                <div data-testid="typing-indicator" className="chat-bubble assistant">
                   <div className="typing-indicator">
                     <div className="typing-dot"></div>
                     <div className="typing-dot"></div>
@@ -393,80 +374,39 @@ const AITutor = () => {
           )}
         </div>
 
-        {/* Quick Action Buttons */}
+        {/* Quick Actions */}
         {messages.length > 0 && !loading && (
-          <div className="mb-4 flex flex-wrap gap-2 scale-in">
-            <button
-              onClick={() => handleQuickAction('simpler')}
-              className="px-4 py-2 rounded-full text-sm flex items-center gap-2 card hover:scale-105 transition-all"
-              style={{ cursor: 'pointer' }}
-            >
-              <Smile className="w-4 h-4" style={{ color: '#8ABF9B' }} />
-              <span style={{ color: '#1A1C19' }}>Explain Simpler</span>
-            </button>
-
-            <button
-              onClick={() => handleQuickAction('example')}
-              className="px-4 py-2 rounded-full text-sm flex items-center gap-2 card hover:scale-105 transition-all"
-              style={{ cursor: 'pointer' }}
-            >
-              <Lightbulb className="w-4 h-4" style={{ color: '#F2C48D' }} />
-              <span style={{ color: '#1A1C19' }}>Give Example</span>
-            </button>
-
-            <button
-              onClick={() => handleQuickAction('visual')}
-              className="px-4 py-2 rounded-full text-sm flex items-center gap-2 card hover:scale-105 transition-all"
-              style={{ cursor: 'pointer' }}
-            >
-              <Eye className="w-4 h-4" style={{ color: '#9EADCC' }} />
-              <span style={{ color: '#1A1C19' }}>Show Visually</span>
-            </button>
-
-            <button
-              onClick={() => handleQuickAction('practice')}
-              className="px-4 py-2 rounded-full text-sm flex items-center gap-2 card hover:scale-105 transition-all"
-              style={{ cursor: 'pointer' }}
-            >
-              <Dumbbell className="w-4 h-4" style={{ color: '#A3D9A5' }} />
-              <span style={{ color: '#1A1C19' }}>Practice Problem</span>
-            </button>
-
-            <button
-              onClick={() => handleQuickAction('confused')}
-              className="px-4 py-2 rounded-full text-sm flex items-center gap-2 card hover:scale-105 transition-all"
-              style={{ cursor: 'pointer' }}
-            >
-              <HelpCircle className="w-4 h-4" style={{ color: '#E69C9C' }} />
-              <span style={{ color: '#1A1C19' }}>I'm Confused</span>
-            </button>
-          </div>
-        )}
-
-        {/* Follow-up Suggestions */}
-        {followUpSuggestions.length > 0 && !loading && (
-          <div className="mb-4 flex flex-wrap gap-2 scale-in">
-            <span className="text-sm font-semibold" style={{ color: '#757873', alignSelf: 'center', marginRight: '8px' }}>Ask next:</span>
-            {followUpSuggestions.map((suggestion, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleFollowUpClick(suggestion)}
-                className="px-3 py-1.5 rounded-full text-sm flex items-center gap-2 hover:scale-105 transition-all"
-                style={{ 
-                  background: 'linear-gradient(135deg, rgba(138, 191, 155, 0.1), rgba(158, 173, 204, 0.1))',
-                  border: '1px solid rgba(138, 191, 155, 0.3)',
-                  cursor: 'pointer',
-                  color: '#1A1C19'
-                }}
-              >
-                {suggestion}
-                <ArrowRight className="w-3 h-3" style={{ color: '#8ABF9B' }} />
+          <div className="mb-3 flex flex-wrap gap-2 scale-in">
+            {[
+              { action: 'simpler', label: 'Explain Simpler', icon: Smile, color: '#34D399' },
+              { action: 'example', label: 'Give Example', icon: Lightbulb, color: '#FBBF24' },
+              { action: 'visual', label: 'Show Visually', icon: Eye, color: '#38BDF8' },
+              { action: 'practice', label: 'Practice Problem', icon: Dumbbell, color: '#A78BFA' },
+              { action: 'confused', label: "I'm Confused", icon: HelpCircle, color: '#FB7185' },
+            ].map(({ action, label, icon: Icon, color }) => (
+              <button key={action} onClick={() => handleQuickAction(action)} className="px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 transition-all hover:-translate-y-0.5" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}>
+                <Icon className="w-3.5 h-3.5" style={{ color }} />
+                <span style={{ color: '#CBD5E1' }}>{label}</span>
               </button>
             ))}
           </div>
         )}
 
-        <div className="flex gap-4 scale-in">
+        {/* Follow-up Suggestions */}
+        {followUpSuggestions.length > 0 && !loading && (
+          <div className="mb-3 flex flex-wrap gap-2 scale-in">
+            <span className="text-xs font-medium self-center mr-1" style={{ color: '#64748B' }}>Ask next:</span>
+            {followUpSuggestions.map((suggestion, idx) => (
+              <button key={idx} onClick={() => handleFollowUpClick(suggestion)} className="px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all hover:-translate-y-0.5" style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)', cursor: 'pointer', color: '#94A3B8' }}>
+                {suggestion}
+                <ArrowRight className="w-3 h-3" style={{ color: '#34D399' }} />
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Chat input */}
+        <div className="flex gap-3 scale-in">
           <Input
             data-testid="chat-input"
             value={inputMessage}
@@ -474,169 +414,83 @@ const AITutor = () => {
             onKeyPress={(e) => e.key === 'Enter' && !loading && handleSendMessage()}
             placeholder="Ask me anything..."
             disabled={loading}
-            className="flex-1 rounded-2xl"
-            style={{ minHeight: '56px', backgroundColor: '#F3F5F2', fontSize: '16px' }}
+            className="flex-1 rounded-xl border-white/10"
+            style={{ minHeight: '52px', background: 'rgba(255,255,255,0.04)', color: '#F8FAFC', fontSize: '15px' }}
           />
           <Button
             data-testid="send-message-btn"
             onClick={() => handleSendMessage()}
             disabled={loading || !inputMessage.trim()}
-            className="rounded-2xl px-6"
-            style={{ background: 'linear-gradient(135deg, #8ABF9B, #78AB89)', color: '#1A1C19', minHeight: '56px' }}
+            className="rounded-xl px-5 border-0"
+            style={{ background: 'linear-gradient(135deg, #34D399, #059669)', color: '#05050A', minHeight: '52px', boxShadow: '0 0 20px rgba(52,211,153,0.2)' }}
           >
             <Send className="w-5 h-5" />
           </Button>
         </div>
 
-        <div className="mt-4 flex gap-4 scale-in">
-          <Button 
-            data-testid="voice-input-btn" 
-            variant="outline" 
-            className="rounded-2xl flex-1" 
-            style={{ color: recording ? '#8ABF9B' : '#757873' }}
-            onClick={handleVoiceInput}
-            disabled={recording}
-          >
-            <Mic className={`w-5 h-5 mr-2 ${recording ? 'pulse-ring' : ''}`} /> 
+        {/* Voice controls */}
+        <div className="mt-3 flex gap-3 scale-in">
+          <Button data-testid="voice-input-btn" variant="outline" className="rounded-xl flex-1 border-white/10 hover:bg-white/5" style={{ color: recording ? '#34D399' : '#94A3B8' }} onClick={handleVoiceInput} disabled={recording}>
+            <Mic className={`w-4 h-4 mr-2 ${recording ? 'pulse-ring' : ''}`} />
             {recording ? 'Recording...' : 'Voice Input'}
           </Button>
-
-          {/* Read Aloud — toggles TTS settings panel */}
-          <Button 
-            data-testid="voice-output-btn" 
-            variant="outline" 
-            className="rounded-2xl flex-1" 
-            style={{ color: isTtsActive ? '#E69C9C' : '#757873' }}
-            onClick={() => {
-              if (isTtsActive) { handleStop(); }
-              else { handleReadAloud(); }
-            }}
-            disabled={!hasAssistantMsg}
-          >
+          <Button data-testid="voice-output-btn" variant="outline" className="rounded-xl flex-1 border-white/10 hover:bg-white/5" style={{ color: isTtsActive ? '#FB7185' : '#94A3B8' }} onClick={() => { if (isTtsActive) handleStop(); else handleReadAloud(); }} disabled={!hasAssistantMsg}>
             {ttsState === TTS_STATE.LOADING ? (
-              <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Preparing...</>
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Preparing...</>
             ) : isTtsActive ? (
-              <><VolumeX className="w-5 h-5 mr-2" /> Stop</>
+              <><VolumeX className="w-4 h-4 mr-2" /> Stop</>
             ) : (
-              <><Volume2 className="w-5 h-5 mr-2" /> Read Aloud</>
+              <><Volume2 className="w-4 h-4 mr-2" /> Read Aloud</>
             )}
           </Button>
-
-          {/* Settings toggle */}
-          <Button
-            data-testid="tts-settings-btn"
-            variant="outline"
-            className="rounded-2xl"
-            style={{ color: showTtsPanel ? '#8ABF9B' : '#757873', minWidth: '48px' }}
-            onClick={() => setShowTtsPanel(p => !p)}
-            title="Voice settings"
-          >
-            <Settings2 className="w-5 h-5" />
+          <Button data-testid="tts-settings-btn" variant="outline" className="rounded-xl border-white/10 hover:bg-white/5" style={{ color: showTtsPanel ? '#34D399' : '#94A3B8', minWidth: '44px' }} onClick={() => setShowTtsPanel(p => !p)} title="Voice settings">
+            <Settings2 className="w-4 h-4" />
             <ChevronDown className={`w-3 h-3 ml-1 transition-transform ${showTtsPanel ? 'rotate-180' : ''}`} />
           </Button>
         </div>
 
-        {/* TTS Control Panel */}
+        {/* TTS Panel */}
         {showTtsPanel && (
-          <div 
-            data-testid="tts-control-panel"
-            className="mt-3 p-5 rounded-2xl scale-in"
-            style={{ backgroundColor: '#F3F5F2', border: '1px solid rgba(138,191,155,0.25)' }}
-          >
-            {/* Playback controls row */}
+          <div data-testid="tts-control-panel" className="mt-3 p-5 rounded-2xl scale-in" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(20px)' }}>
             {isTtsActive && (
-              <div className="flex items-center gap-2 mb-4 pb-4" style={{ borderBottom: '1px solid rgba(138,191,155,0.15)' }}>
-                <span className="text-xs font-semibold mr-2" style={{ color: '#757873' }}>Now playing</span>
-                {ttsState === TTS_STATE.LOADING && (
-                  <Loader2 className="w-4 h-4 animate-spin" style={{ color: '#8ABF9B' }} />
-                )}
+              <div className="flex items-center gap-2 mb-4 pb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <span className="text-xs font-medium mr-2" style={{ color: '#64748B' }}>Now playing</span>
+                {ttsState === TTS_STATE.LOADING && <Loader2 className="w-4 h-4 animate-spin" style={{ color: '#34D399' }} />}
                 {ttsState === TTS_STATE.SPEAKING && (
-                  <Button
-                    data-testid="tts-pause-btn"
-                    size="sm"
-                    variant="outline"
-                    className="rounded-xl h-8 px-3"
-                    onClick={handlePause}
-                    style={{ color: '#F2C48D', borderColor: '#F2C48D' }}
-                  >
-                    <Pause className="w-4 h-4 mr-1" /> Pause
+                  <Button data-testid="tts-pause-btn" size="sm" variant="outline" className="rounded-lg h-7 px-2.5 border-amber-500/30 hover:bg-amber-500/10" onClick={handlePause} style={{ color: '#FBBF24' }}>
+                    <Pause className="w-3.5 h-3.5 mr-1" /> Pause
                   </Button>
                 )}
                 {ttsState === TTS_STATE.PAUSED && (
-                  <Button
-                    data-testid="tts-resume-btn"
-                    size="sm"
-                    variant="outline"
-                    className="rounded-xl h-8 px-3"
-                    onClick={handleResume}
-                    style={{ color: '#8ABF9B', borderColor: '#8ABF9B' }}
-                  >
-                    <Play className="w-4 h-4 mr-1" /> Resume
+                  <Button data-testid="tts-resume-btn" size="sm" variant="outline" className="rounded-lg h-7 px-2.5 border-emerald-500/30 hover:bg-emerald-500/10" onClick={handleResume} style={{ color: '#34D399' }}>
+                    <Play className="w-3.5 h-3.5 mr-1" /> Resume
                   </Button>
                 )}
                 {(ttsState === TTS_STATE.SPEAKING || ttsState === TTS_STATE.PAUSED) && (
-                  <Button
-                    data-testid="tts-stop-btn"
-                    size="sm"
-                    variant="outline"
-                    className="rounded-xl h-8 px-3"
-                    onClick={handleStop}
-                    style={{ color: '#E69C9C', borderColor: '#E69C9C' }}
-                  >
+                  <Button data-testid="tts-stop-btn" size="sm" variant="outline" className="rounded-lg h-7 px-2.5 border-rose-500/30 hover:bg-rose-500/10" onClick={handleStop} style={{ color: '#FB7185' }}>
                     <Square className="w-3 h-3 mr-1" /> Stop
                   </Button>
                 )}
               </div>
             )}
-
-            {/* Voice & Speed row */}
             <div className="flex flex-col sm:flex-row gap-4">
-              {/* Voice selector */}
               <div className="flex-1">
-                <label className="block text-xs font-semibold mb-1.5" style={{ color: '#757873' }}>Voice</label>
-                <select
-                  data-testid="tts-voice-select"
-                  value={selectedVoiceURI}
-                  onChange={e => handleVoiceChange(e.target.value)}
-                  className="w-full rounded-xl px-3 py-2 text-sm"
-                  style={{
-                    backgroundColor: '#FDFBF7',
-                    border: '1px solid rgba(138,191,155,0.3)',
-                    color: '#1A1C19',
-                    outline: 'none'
-                  }}
-                >
+                <label className="block text-xs font-medium mb-1.5" style={{ color: '#64748B' }}>Voice</label>
+                <select data-testid="tts-voice-select" value={selectedVoiceURI} onChange={e => handleVoiceChange(e.target.value)} className="w-full rounded-lg px-3 py-2 text-sm" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#F8FAFC', outline: 'none' }}>
                   {ttsVoices.length === 0 && <option value="">Loading voices...</option>}
                   {ttsVoices.map(v => (
-                    <option key={v.voiceURI} value={v.voiceURI}>
-                      {v.name} {v.localService ? '' : '(online)'}
-                    </option>
+                    <option key={v.voiceURI} value={v.voiceURI}>{v.name} {v.localService ? '' : '(online)'}</option>
                   ))}
                 </select>
               </div>
-
-              {/* Speed control */}
               <div className="flex-1">
-                <label className="block text-xs font-semibold mb-1.5" style={{ color: '#757873' }}>
-                  Speed: <span style={{ color: '#8ABF9B' }}>{speechRate.toFixed(1)}x</span>
+                <label className="block text-xs font-medium mb-1.5" style={{ color: '#64748B' }}>
+                  Speed: <span style={{ color: '#34D399' }}>{speechRate.toFixed(1)}x</span>
                 </label>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs" style={{ color: '#9EADCC' }}>0.5x</span>
-                  <input
-                    data-testid="tts-speed-slider"
-                    type="range"
-                    min="0.5"
-                    max="2.0"
-                    step="0.1"
-                    value={speechRate}
-                    onChange={e => handleRateChange(e.target.value)}
-                    className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer"
-                    style={{
-                      background: `linear-gradient(to right, #8ABF9B ${((speechRate - 0.5) / 1.5) * 100}%, #D9DCD6 ${((speechRate - 0.5) / 1.5) * 100}%)`,
-                      accentColor: '#8ABF9B'
-                    }}
-                  />
-                  <span className="text-xs" style={{ color: '#9EADCC' }}>2.0x</span>
+                  <span className="text-xs" style={{ color: '#64748B' }}>0.5x</span>
+                  <input data-testid="tts-speed-slider" type="range" min="0.5" max="2.0" step="0.1" value={speechRate} onChange={e => handleRateChange(e.target.value)} className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer" style={{ background: `linear-gradient(to right, #34D399 ${((speechRate - 0.5) / 1.5) * 100}%, rgba(255,255,255,0.1) ${((speechRate - 0.5) / 1.5) * 100}%)`, accentColor: '#34D399' }} />
+                  <span className="text-xs" style={{ color: '#64748B' }}>2.0x</span>
                 </div>
               </div>
             </div>

@@ -16,7 +16,6 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       const response = await axios.post(`${API}/auth/login`, { email, password });
       setAuthToken(response.data.token);
@@ -30,29 +29,30 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-8" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1763615445546-d2280a7167fb?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAxODF8MHwxfHNlYXJjaHwyfHxtaW5pbWFsaXN0JTIwcGFzdGVsJTIwYmFja2dyb3VuZHxlbnwwfHx8fDE3NzQ4NTAzNzl8MA&ixlib=rb-4.1.0&q=85')", backgroundSize: 'cover', backgroundPosition: 'center' }}>
-      <div data-testid="login-card" className="w-full max-w-md p-12 rounded-3xl" style={{ backgroundColor: '#FDFBF7', border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
+    <div className="min-h-screen flex items-center justify-center px-8 relative overflow-hidden" style={{ background: '#05050A' }}>
+      <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full opacity-20" style={{ background: 'radial-gradient(circle, rgba(52,211,153,0.4) 0%, transparent 70%)' }} />
+      <div className="absolute bottom-[-15%] left-[-5%] w-[400px] h-[400px] rounded-full opacity-15" style={{ background: 'radial-gradient(circle, rgba(251,191,36,0.3) 0%, transparent 70%)' }} />
+
+      <div data-testid="login-card" className="w-full max-w-md p-10 rounded-2xl relative z-10 fade-in" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(20px)', boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}>
         <div className="flex justify-center mb-8">
           <div className="flex items-center gap-3">
-            <Brain className="w-12 h-12" style={{ color: '#8ABF9B' }} />
-            <span className="text-3xl font-bold" style={{ fontFamily: 'Nunito', color: '#1A1C19' }}>NeuroBuddy</span>
+            <Brain className="w-10 h-10" style={{ color: '#34D399' }} />
+            <span className="text-2xl font-semibold tracking-tight" style={{ fontFamily: 'Outfit', color: '#F8FAFC' }}>NeuroBuddy</span>
           </div>
         </div>
 
-        <h2 data-testid="login-title" className="text-2xl sm:text-3xl font-bold mb-2 text-center" style={{ fontFamily: 'Nunito', color: '#1A1C19' }}>
+        <h2 data-testid="login-title" className="text-2xl font-semibold mb-2 text-center" style={{ fontFamily: 'Outfit', color: '#F8FAFC' }}>
           Welcome Back
         </h2>
-        <p className="text-center mb-8" style={{ color: '#4A4D48' }}>
+        <p className="text-center mb-8 text-sm" style={{ color: '#94A3B8' }}>
           Sign in to continue your learning journey
         </p>
 
-        <form data-testid="login-form" onSubmit={handleLogin} className="space-y-6">
+        <form data-testid="login-form" onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label className="block text-sm font-semibold mb-2" style={{ color: '#1A1C19' }}>
-              Email
-            </label>
+            <label className="block text-sm font-medium mb-2" style={{ color: '#94A3B8' }}>Email</label>
             <div className="relative">
-              <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: '#757873' }} />
+              <Mail className="absolute left-3.5 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: '#64748B' }} />
               <Input
                 data-testid="login-email-input"
                 type="email"
@@ -60,18 +60,15 @@ const Login = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="pl-12 rounded-xl"
-                style={{ minHeight: '48px', backgroundColor: '#F3F5F2' }}
+                className="pl-11 rounded-xl border-white/10 focus:border-emerald-500/50 focus:ring-emerald-500/20"
+                style={{ minHeight: '48px', background: 'rgba(255,255,255,0.04)', color: '#F8FAFC' }}
               />
             </div>
           </div>
-
           <div>
-            <label className="block text-sm font-semibold mb-2" style={{ color: '#1A1C19' }}>
-              Password
-            </label>
+            <label className="block text-sm font-medium mb-2" style={{ color: '#94A3B8' }}>Password</label>
             <div className="relative">
-              <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: '#757873' }} />
+              <Lock className="absolute left-3.5 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: '#64748B' }} />
               <Input
                 data-testid="login-password-input"
                 type="password"
@@ -79,31 +76,25 @@ const Login = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="pl-12 rounded-xl"
-                style={{ minHeight: '48px', backgroundColor: '#F3F5F2' }}
+                className="pl-11 rounded-xl border-white/10 focus:border-emerald-500/50 focus:ring-emerald-500/20"
+                style={{ minHeight: '48px', background: 'rgba(255,255,255,0.04)', color: '#F8FAFC' }}
               />
             </div>
           </div>
-
           <Button
             data-testid="login-submit-btn"
             type="submit"
             disabled={loading}
-            className="w-full rounded-full text-lg"
-            style={{ backgroundColor: '#8ABF9B', color: '#1A1C19', minHeight: '48px' }}
+            className="w-full rounded-full text-base border-0"
+            style={{ background: 'linear-gradient(135deg, #34D399, #059669)', color: '#05050A', minHeight: '48px', fontWeight: 600, boxShadow: '0 0 25px rgba(52,211,153,0.2)' }}
           >
             {loading ? 'Signing in...' : 'Sign In'}
           </Button>
         </form>
 
-        <p className="text-center mt-6" style={{ color: '#4A4D48' }}>
+        <p className="text-center mt-6 text-sm" style={{ color: '#64748B' }}>
           Don't have an account?{' '}
-          <button
-            data-testid="login-register-link"
-            onClick={() => navigate('/register')}
-            className="font-semibold"
-            style={{ color: '#8ABF9B' }}
-          >
+          <button data-testid="login-register-link" onClick={() => navigate('/register')} className="font-semibold" style={{ color: '#34D399' }}>
             Sign up
           </button>
         </p>
